@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>CardioGuard – Cardiovascular Risk Assessment</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <style>
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background-color: #f0f7ff;
+      margin: 0;
+      padding: 20px;
+    }
+    .container {
+      max-width: 650px;
+      margin: auto;
+      background: white;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    h1 {
+      color: #005288;
+      text-align: center;
+      margin-bottom: 10px;
+    }
+    p {
+      color: #555;
+      text-align: center;
+      margin-bottom: 25px;
+    }
+    fieldset {
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      padding: 15px;
+      margin-bottom: 15px;
+    }
+    legend {
+      font-weight: bold;
+      color: #005288;
+      padding: 0 8px;
+    }
+    label {
+      display: block;
+      margin: 10px 0 5px;
+      font-weight: 500;
+    }
+    input, select {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      font-size: 16px;
+    }
+    button {
+      margin-top: 20px;
+      width: 100%;
+      padding: 12px;
+      background-color: #0077cc;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 16px;
+    }
+    button:hover {
+      background-color: #005fa3;
+    }
+    .btn-green {
+      background-color: #28a745;
+    }
+    .btn-green:hover {
+      background-color: #218838;
+    }
+    .hidden {
+      display: none;
+    }
+    #result {
+      margin-top: 30px;
+      padding: 20px;
+      background: #e6f2ff;
+      border-left: 5px solid #0077cc;
+      border-radius: 5px;
+    }
+    #result h2, h3 {
+      color: #005288;
+    }
+    #result ul {
+      margin: 10px 0;
+      padding-left: 20px;
+    }
+    #result li {
+      margin: 5px 0;
+      color: #333;
+    }
+    .debug {
+      font-size: 12px;
+      color: #999;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>CardioGuard</h1>
+    <p><strong>Cardiovascular Risk Assessment Tool</strong><br>Enter your details to assess heart disease risk.</p>
+
+    <form id="riskForm">
+      <!-- Personal Info -->
+      <fieldset>
+        <legend>Personal Information</legend>
+        <label>Name: <input type="text" id="name" placeholder="Your name"></label>
+        <label>Age: <input type="number" id="age" required></label>
+        <label>Gender:
+          <select id="gender" required>
+            <option value="">Select</option>
+            <option value="male">Male</option>
+            <option value="female">Female</option>
+          </select>
+        </label>
+        <label>Race/Ethnicity:
+          <select id="race" required>
+            <option value="">Select</option>
+            <option value="white">White</option>
+            <option value="africanAmerican">African American</option>
+            <option value="other">Other</option>
+          </select>
+        </label>
+      </fieldset>
+
+      <!-- Blood Pressure -->
+      <fieldset>
+        <legend>Blood Pressure</legend>
+        <label>Systolic BP (mmHg): <input type="number" id="sbp" required></label>
+        <label>On BP Medication?
+          <select id="bpTreatment" required>
+            <option value="">Select</option>
+            <option value="yes">Yes</option>
+            <option value="no">No</option>
+          </select>
+        </label>
+      </fieldset>
+
+      <!-- Blood Tests -->
+      <fieldset>
+        <legend>Blood Test Results</legend>
+        <label>Total Cholesterol (mg/dL): <input type="number" id="tc" required></label>
+        <label>HDL Cholesterol (mg/dL): <input type="number" id="hdl" required></label>
+        <label>LDL Cholesterol (mg/dL): <input type="number" id="ldl"></label>
+        <label>Triglycerides (mg/dL): <input type="number" id="tg"></label>
+        <label>Fasting Glucose (mg/dL): <input type="number" id="glucose"></label>
+        <label>HbA1c (%): <input type="number" id="hba1c" step="0.1"></label>
+      </fieldset>
+
+      <!-- Lifestyle & History -->
+      <fieldset>
+        <legend>Medical History</legend>
+        <label>Smoking Status:
+          <select id="smoker" required>
+            <option value="">Select</option>
+            <option value="yes">Current Smoker</option>
+            <option value="no">Never Smoked</option>
+          </select>
+        </label>
+        <label>Diabetes:
+          <select id="diabetes" required>
+            <option value="">Select</option>
+            <option value="yes">Yes</option>
+            <option value="no">No</option>
+          </select>
+        </label>
+        <label>Family History of CVD?
+          <select id="familyHistory" required>
+            <option value="">Select</option>
+            <option value="yes">Yes</option>
+            <option value="no">No</option>
+          </select>
+        </label>
+      </fieldset>
+
+      <button type="submit">Calculate Risk & Get Advice</button>
+    </form>
+
+    <!-- Results Section -->
+    <div id="result" class="hidden">
+      <h2><strong>10-Year ASCVD Risk:</strong> <span id="riskPercent"></span>%</h2>
+      <p><strong>Risk Category:</strong> <span id="riskCategory"></span></p>
+      <p><strong>Medical Advice:</strong> <span id="medicalAdvice"></span></p>
+
+      <h3>Blood Test Review</h3>
+      <ul id="bloodTestAdvice"></ul>
+
+      <h3>Recommended Actions</h3>
+      <ul id="actionPlan"></ul>
+
+      <button id="downloadPdf" class="btn-green">Download Report as PDF</button>
+    </div>
+
+    <p class="debug">Debug: Open browser console (F12) to see calculation logs.</p>
+  </div>
+
+  <script>
+    document.getElementById('riskForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+
+      // Read inputs
+      const name = document.getElementById('name').value || 'Patient';
+      const age = parseFloat(document.getElementById('age').value);
+      const gender = document.getElementById('gender').value;
+      const race = document.getElementById('race').value;
+      const tc = parseFloat(document.getElementById('tc').value);
+      const hdl = parseFloat(document.getElementById('hdl').value);
+      const sbp = parseFloat(document.getElementById('sbp').value);
+      const bpTreatment = document.getElementById('bpTreatment').value === 'yes';
+      const smoker = document.getElementById('smoker').value === 'yes';
+      const diabetes = document.getElementById('diabetes').value === 'yes';
+      const ldl = parseFloat(document.getElementById('ldl').value);
+      const tg = parseFloat(document.getElementById('tg').value);
+      const glucose = parseFloat(document.getElementById('glucose').value);
+      const hba1c = parseFloat(document.getElementById('hba1c').value);
+      const familyHistory = document.getElementById('familyHistory').value === 'yes';
+
+      // Validate numeric inputs
+      if ([age, tc, hdl, sbp].some(isNaN)) {
+        alert("Please enter valid numbers for age, cholesterol, and blood pressure.");
+        return;
+      }
+
+      // Log all inputs
+      console.log("📥 Inputs:", { age, gender, race, tc, hdl, sbp, bpTreatment, smoker, diabetes });
+
+      // Natural logs
+      const lnAge = Math.log(age);
+      const lnTc = Math.log(tc);
+      const lnHdl = Math.log(hdl);
+      const lnSbp = Math.log(sbp);
+
+      // Initialize xBeta and S0_10
+      let xBeta = 0;
+      let S0_10 = 0.9144;
+
+      // Coefficients by group
+      if (gender === 'male' && race === 'africanAmerican') {
+        xBeta = -24.35715 + 0.88941*lnAge + 0.25411*Math.pow(lnAge,2) + 0.51092*lnTc + (-0.83642)*lnHdl + 0.42191*lnSbp + 0.47654*(bpTreatment?1:0) + 0.50361*(smoker?1:0) + 0.21558*(diabetes?1:0);
+        S0_10 = 0.8954;
+      } else if (gender === 'male' && race !== 'africanAmerican') {
+        xBeta = -29.08598 + 0.76551*lnAge + 0.65665*Math.pow(lnAge,2) + 0.79384*lnTc + (-0.60351)*lnHdl + 0.50604*lnSbp + 0.34275*(bpTreatment?1:0) + 0.96187*(smoker?1:0) + 0.66051*(diabetes?1:0);
+        S0_10 = 0.9144;
+      } else if (gender === 'female' && race === 'africanAmerican') {
+        xBeta = -29.09743 + 1.33514*lnAge + 0.09673*Math.pow(lnAge,2) + 0.15403*lnTc + (-0.55625)*lnHdl + 0.39568*lnSbp + 0.19337*(bpTreatment?1:0) + 0.50668*(smoker?1:0) + 0.34534*(diabetes?1:0);
+        S0_10 = 0.9597;
+      } else {
+        xBeta = -29.09743 + 1.33514*lnAge + 0.13825*Math.pow(lnAge,2) + 0.92974*lnTc + (-0.77225)*lnHdl + 0.66157*lnSbp + 0.55135*(bpTreatment?1:0) + 0.85061*(smoker?1:0) + 0.51548*(diabetes?1:0);
+        S0_10 = 0.9665;
+      }
+
+      // Final risk calculation
+      const expXBeta = Math.exp(xBeta);
+      const survival = Math.pow(S0_10, expXBeta);
+      const risk = (1 - survival) * 100;
+      const riskPercent = Math.min(Math.max(risk, 0), 100).toFixed(1);
+
+      // Log debug values
+      console.log("📊 Calculation:", { lnAge, lnTc, lnHdl, lnSbp, xBeta, "exp(xBeta)": expXBeta, survival, risk: riskPercent + "%" });
+
+      // Update UI
+      document.getElementById('riskPercent').textContent = riskPercent;
+      const categorySpan = document.getElementById('riskCategory');
+      const adviceSpan = document.getElementById('medicalAdvice');
+
+      let category = '';
+      let advice = '';
+
+      if (risk < 5) {
+        category = "Low";
+        advice = "Your risk is low. Continue healthy habits like balanced diet and regular exercise.";
+      } else if (risk <= 7.5) {
+        category = "Borderline";
+        advice = "Your risk is borderline. Consider lifestyle changes and regular check-ups.";
+      } else if (risk <= 20) {
+        category = "Intermediate";
+        advice = "Your risk is elevated. Consult a doctor for preventive therapy and lifestyle plan.";
+      } else {
+        category = "High";
+        advice = "Your risk is high. Immediate medical consultation is recommended for statins, BP control, and diabetes management.";
+      }
+
+      categorySpan.textContent = category;
+      adviceSpan.textContent = advice;
+
+      // Blood Test Review
+      const bloodList = document.getElementById('bloodTestAdvice');
+      bloodList.innerHTML = '';
+      if (ldl > 160) bloodList.innerHTML += `<li><strong>High LDL</strong>: Consider statins and dietary changes.</li>`;
+      if (tg > 150) bloodList.innerHTML += `<li><strong>High Triglycerides</strong>: Reduce sugar, alcohol, and refined carbs.</li>`;
+      if (glucose > 126) bloodList.innerHTML += `<li><strong>High Fasting Glucose</strong>: Suggests diabetes. Confirm with HbA1c.</li>`;
+      if (hba1c >= 6.5) bloodList.innerHTML += `<li><strong>Diagnosis of Diabetes</strong>: HbA1c ≥6.5%. Start medical management.</li>`;
+      if (familyHistory) bloodList.innerHTML += `<li><strong>Family History</strong>: Increases risk. Monitor more frequently.</li>`;
+      if (smoker) bloodList.innerHTML += `<li><strong>Smoking</strong>: Major risk factor. Quitting reduces risk significantly.</li>`;
+
+      // Action Plan
+      document.getElementById('actionPlan').innerHTML = `
+        <li>Follow up with a cardiologist or primary care doctor.</li>
+        <li>Adopt a heart-healthy diet (Mediterranean or DASH).</li>
+        <li>Exercise at least 150 minutes per week (e.g., brisk walking).</li>
+        <li>Monitor BP and cholesterol every 6 months.</li>
+        <li>If risk >7.5%, discuss statin therapy with your doctor.</li>
+      `;
+
+      // Show result
+      document.getElementById('result').classList.remove('hidden');
+      document.getElementById('downloadPdf').style.display = 'block';
+    });
+
+    // PDF Export
+    document.getElementById('downloadPdf').addEventListener('click', function () {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+
+      const name = document.getElementById('name').value || 'Patient';
+      const riskPercent = document.getElementById('riskPercent').textContent;
+      const category = document.getElementById('riskCategory').textContent;
+      const advice = document.getElementById('medicalAdvice').textContent;
+
+      doc.setFontSize(18);
+      doc.text("CardioGuard – Risk Assessment", 20, 20);
+
+      doc.setFontSize(12);
+      doc.text(`Name: ${name}`, 20, 30);
+      doc.text(`Date: ${new Date().toLocaleDateString()}`, 20, 40);
+      doc.text(`10-Year ASCVD Risk: ${riskPercent}%`, 20, 50);
+      doc.text(`Risk Category: ${category}`, 20, 60);
+      doc.text(`Medical Advice: ${advice}`, 20, 70);
+
+      doc.text("Blood Test Review:", 20, 90);
+      const bloodLines = [];
+      document.querySelectorAll('#bloodTestAdvice li').forEach(li => bloodLines.push(li.textContent));
+      bloodLines.forEach((line, i) => doc.text(`• ${line}`, 20, 100 + i * 10));
+
+      doc.text("Recommended Actions:", 20, 140 + bloodLines.length * 10);
+      const actionLines = [
+        "Follow up with a cardiologist or primary care doctor.",
+        "Adopt a heart-healthy diet (Mediterranean or DASH).",
+        "Exercise at least 150 minutes per week.",
+        "Monitor BP and cholesterol every 6 months.",
+        "If risk >7.5%, discuss statin therapy with your doctor."
+      ];
+      actionLines.forEach((line, i) => doc.text(`• ${line}`, 20, 150 + bloodLines.length * 10 + i * 10));
+
+      doc.save(`CardioGuard_${name}_Report.pdf`);
+    });
+  </script>
+</body>
+</html>
